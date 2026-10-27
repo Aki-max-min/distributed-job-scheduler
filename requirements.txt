@@ -4,7 +4,8 @@ sqlalchemy
 psycopg2-binary
 python-jose[cryptography]
 passlib[bcrypt]
-pydantic
+bcrypt<5
+pydantic[email]
 apscheduler
 python-dotenv
 pytest

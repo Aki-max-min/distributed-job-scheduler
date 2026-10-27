@@ -7,7 +7,7 @@ from app.main import app
 from app.database import Base, get_db
 
 # Separate test database — never touches your real job_scheduler DB.
-TEST_DATABASE_URL = "postgresql://postgres:postgres@localhost:5432/job_scheduler_test"
+TEST_DATABASE_URL = "postgresql+psycopg2://postgres:postgres@localhost:5432/job_scheduler_test"
 
 engine = create_engine(TEST_DATABASE_URL)
 TestSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)

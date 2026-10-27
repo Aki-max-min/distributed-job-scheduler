@@ -1,6 +1,13 @@
 from datetime import datetime
-from app.models import Job, Queue, Project, Organization
+from app.models import Job, Queue, Project, Organization, Worker
 from app.worker_service import CLAIM_JOB_SQL
+
+
+def _create_worker(db_session, hostname):
+    worker = Worker(hostname=hostname, status="idle")
+    db_session.add(worker)
+    db_session.commit()
+    return worker.id
 
 
 def _create_pending_job(db_session):
@@ -24,8 +31,9 @@ def _create_pending_job(db_session):
 
 def test_claim_marks_job_running_and_sets_claimed_by(db_session):
     job_id = _create_pending_job(db_session)
+    worker_a = _create_worker(db_session, "worker-a")
 
-    result = db_session.execute(CLAIM_JOB_SQL, {"worker_id": "worker-a"})
+    result = db_session.execute(CLAIM_JOB_SQL, {"worker_id": worker_a})
     row = result.fetchone()
     db_session.commit()
 
@@ -35,19 +43,21 @@ def test_claim_marks_job_running_and_sets_claimed_by(db_session):
     db_session.expire_all()
     job = db_session.query(Job).filter(Job.id == job_id).first()
     assert job.status == "running"
-    assert job.claimed_by == "worker-a"
+    assert job.claimed_by == worker_a
     assert job.attempt_count == 1
 
 
 def test_claim_does_not_return_already_running_job(db_session):
-    job_id = _create_pending_job(db_session)
+    _create_pending_job(db_session)
+    worker_a = _create_worker(db_session, "worker-a")
+    worker_b = _create_worker(db_session, "worker-b")
 
     # First claim succeeds
-    db_session.execute(CLAIM_JOB_SQL, {"worker_id": "worker-a"})
+    db_session.execute(CLAIM_JOB_SQL, {"worker_id": worker_a})
     db_session.commit()
 
     # Second claim attempt should find nothing — job is no longer pending
-    result = db_session.execute(CLAIM_JOB_SQL, {"worker_id": "worker-b"})
+    result = db_session.execute(CLAIM_JOB_SQL, {"worker_id": worker_b})
     row = result.fetchone()
     db_session.commit()
 

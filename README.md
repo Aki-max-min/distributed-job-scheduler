@@ -56,6 +56,16 @@ docs/
 
 ## Setup Instructions
 
+Clone the repo first. Every command below runs from inside it:
+
+```bash
+git clone https://github.com/Aki-max-min/distributed-job-scheduler.git
+cd distributed-job-scheduler
+```
+
+You also need **PostgreSQL running on `localhost:5432`**, with a `postgres` user whose password is `postgres`.
+Those are the values in `backend/.env.example`. The backend and the worker both connect to it when they start.
+
 ### Backend
 ```bash
 cd backend
@@ -81,6 +91,16 @@ npm install
 npm run dev
 ```
 App: `http://localhost:5173`
+
+### Tests
+
+With the backend virtualenv active. The tests use their own database, so your data is never touched:
+
+```bash
+psql -h localhost -U postgres -c "CREATE DATABASE job_scheduler_test;"
+(cd backend && pytest tests)          # retry logic
+PYTHONPATH=backend pytest tests       # API and worker-claim tests, from the repo root
+```
 
 ## API Summary
 
